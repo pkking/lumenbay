@@ -133,9 +133,12 @@ class NapCatAlbumClient:
                 # documentation/examples may use "album_name".
                 native_name = item.get("name")
                 legacy_name = item.get("album_name")
-                if native_name is not None and legacy_name is not None:
-                    if native_name != legacy_name:
-                        raise NapCatError("Conflicting album names in NapCat response")
+                if (
+                    native_name is not None
+                    and legacy_name is not None
+                    and native_name != legacy_name
+                ):
+                    raise NapCatError("Conflicting album names in NapCat response")
                 album_name = native_name if native_name is not None else legacy_name
                 if not isinstance(album_id, str) or not album_id:
                     raise NapCatError("Album id or name is missing")
