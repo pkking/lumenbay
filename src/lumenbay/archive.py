@@ -10,11 +10,11 @@ import hashlib
 import os
 import sqlite3
 import tempfile
+from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
-from typing import Iterator
 
 
 class DeliveryState(StrEnum):
