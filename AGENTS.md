@@ -1,6 +1,6 @@
 # Agent development contract
 
-Read this file before changing code. Lumenbay archives pictures from authorized WeChat groups to specified QQ group albums. Current status: tooling scaffold only; no live adapters yet.
+Read this file before changing code. Lumenbay archives pictures from authorized WeChat groups to specified QQ group albums. Current status: adapter implementations and opt-in CLI exist; live-platform compatibility is not verified.
 
 ## What to optimize for
 1. **No lost photos:** persist inputs and delivery state before any remote side effect.

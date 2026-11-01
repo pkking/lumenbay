@@ -33,3 +33,7 @@ data/
 *.sqlite3
 *.db
 *.log
+
+# Local routing configuration (group names and IDs)
+config.json
+config.local.json
