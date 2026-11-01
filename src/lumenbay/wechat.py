@@ -8,9 +8,10 @@ from __future__ import annotations
 
 import importlib
 import sys
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Protocol, Sequence, cast
+from typing import Protocol, cast
 
 
 class WeChatReadError(RuntimeError):
