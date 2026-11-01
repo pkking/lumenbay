@@ -34,4 +34,4 @@ Real client tests require an explicitly authorized test WeChat group and test QQ
 
 ## License
 
-No project license has been selected; discuss licensing before accepting substantial external contributions.
+Contributions are licensed under the [MIT License](LICENSE).

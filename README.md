@@ -59,4 +59,4 @@ Only ingest groups whose members have authorized archiving. Never commit login c
 
 ## License
 
-A license has not been selected yet. Until one is added, standard copyright terms apply.
+Licensed under the [MIT License](LICENSE).

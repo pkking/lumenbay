@@ -6,6 +6,7 @@ build-backend = "hatchling.build"
 name = "lumenbay"
 version = "0.1.0"
 description = "Archive WeChat group photos into QQ group albums"
+license = "MIT"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = []
