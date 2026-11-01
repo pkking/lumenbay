@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import base64
-from pathlib import Path
 from io import BytesIO
+from pathlib import Path
 
 import pytest
 
@@ -97,8 +97,9 @@ def test_missing_or_ambiguous_album_is_error() -> None:
 
 
 def test_redirect_is_never_followed() -> None:
-    from lumenbay.napcat import _NoRedirect
     from urllib.request import Request
+
+    from lumenbay.napcat import _NoRedirect
 
     assert _NoRedirect().redirect_request(
         Request("https://qq.example.test/get_qun_album_list"),

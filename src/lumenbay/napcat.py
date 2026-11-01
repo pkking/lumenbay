@@ -26,8 +26,13 @@ class _NoRedirect(HTTPRedirectHandler):
     """Never forward an authenticated request to a different host."""
 
     def redirect_request(
-        self, req: Request, fp: object, code: int, msg: str,
-        headers: object, newurl: str,
+        self,
+        req: Request,
+        fp: object,
+        code: int,
+        msg: str,
+        headers: object,
+        newurl: str,
     ) -> None:
         return None
 
