@@ -165,26 +165,39 @@ def test_invalid_has_more_flag_fails_closed() -> None:
 
 def test_native_ntqq_album_name_schema() -> None:
     """Native service uses "name", unlike OneBot's historical sample."""
-    def native(action: str, payload: dict[str, object]) -> dict[str, object]:
-        return {"status": "ok", "retcode": 0, "data": {
-            "album_list": [{"album_id": "native-id", "name": "Native Photos"}],
-            "has_more": False, "attach_info": "",
-        }}
 
-    client = NapCatAlbumClient(
-        base_url="http://localhost:3000", access_token="", transport=native
-    )
+    def native(action: str, payload: dict[str, object]) -> dict[str, object]:
+        return {
+            "status": "ok",
+            "retcode": 0,
+            "data": {
+                "album_list": [{"album_id": "native-id", "name": "Native Photos"}],
+                "has_more": False,
+                "attach_info": "",
+            },
+        }
+
+    client = NapCatAlbumClient(base_url="http://localhost:3000", access_token="", transport=native)
     assert client.find_album("q1", "Native Photos").id == "native-id"
 
 
 def test_conflicting_native_and_legacy_album_names_fail_closed() -> None:
     def conflicting(action: str, payload: dict[str, object]) -> dict[str, object]:
-        return {"status": "ok", "retcode": 0, "data": {
-            "album_list": [{
-                "album_id": "one", "name": "Correct", "album_name": "Wrong",
-            }],
-            "has_more": False, "attach_info": "",
-        }}
+        return {
+            "status": "ok",
+            "retcode": 0,
+            "data": {
+                "album_list": [
+                    {
+                        "album_id": "one",
+                        "name": "Correct",
+                        "album_name": "Wrong",
+                    }
+                ],
+                "has_more": False,
+                "attach_info": "",
+            },
+        }
 
     client = NapCatAlbumClient(
         base_url="http://localhost:3000", access_token="", transport=conflicting
