@@ -94,3 +94,24 @@ def test_validation_and_invalid_transition(tmp_path: Path) -> None:
             data=JPEG,
             quality="invalid",
         )
+
+
+def test_destination_filter_and_acknowledgement(tmp_path: Path) -> None:
+    store = make_archive(tmp_path)
+    first = record(store, "a", "qq1")
+    second = record(store, "b", "qq2")
+    assert [x.id for x in store.pending(destination_group="qq1", album_id="album")] == [first]
+    assert [x.id for x in store.pending(destination_group="qq2", album_id="album")] == [second]
+    assert store.has_event(
+        source_group="wx1", message_id="a", destination_group="qq1", album_id="album"
+    )
+    assert not store.has_event(
+        source_group="wx1", message_id="a", destination_group="qq2", album_id="album"
+    )
+    store.claim(first)
+    acknowledged = store.mark_acknowledged(first)
+    assert acknowledged.state is DeliveryState.ACKNOWLEDGED
+    assert store.pending(destination_group="qq1") == []
+    with pytest.raises(ValueError, match="not claimable"):
+        store.claim(first)
+    assert store.mark_verified(first, "remote-later").state is DeliveryState.VERIFIED

@@ -22,6 +22,7 @@ class DeliveryState(StrEnum):
     UPLOADING = "uploading"
     FAILED = "failed"
     UNKNOWN = "unknown"
+    ACKNOWLEDGED = "acknowledged"
     VERIFIED = "verified"
 
 
@@ -118,6 +119,19 @@ class Archive:
             raise KeyError(delivery_id)
         return self._delivery(row)
 
+    def has_event(
+        self, *, source_group: str, message_id: str,
+        destination_group: str, album_id: str,
+    ) -> bool:
+        """Check persisted source identity before an expensive UI download."""
+        with self._connection() as conn:
+            row = conn.execute(
+                """SELECT 1 FROM events WHERE source_group = ? AND message_id = ?
+                   AND destination_group = ? AND album_id = ?""",
+                (source_group, message_id, destination_group, album_id),
+            ).fetchone()
+        return row is not None
+
     def ingest(
         self,
         *,
@@ -183,14 +197,19 @@ class Archive:
                 )
         return self.get(result_id)
 
-    def pending(self, *, limit: int = 100) -> list[Delivery]:
+    def pending(
+        self, *, destination_group: str | None = None,
+        album_id: str | None = None, limit: int = 100,
+    ) -> list[Delivery]:
         if limit < 1:
             raise ValueError("limit must be positive")
         with self._connection() as conn:
             rows = conn.execute(
                 """SELECT * FROM images WHERE state IN ('ready', 'failed')
+                   AND (? IS NULL OR destination_group = ?)
+                   AND (? IS NULL OR album_id = ?)
                    ORDER BY id LIMIT ?""",
-                (limit,),
+                (destination_group, destination_group, album_id, album_id, limit),
             ).fetchall()
         return [self._delivery(row) for row in rows]
 
@@ -235,13 +254,21 @@ class Archive:
             delivery_id, state=DeliveryState.UNKNOWN, allowed=(DeliveryState.UPLOADING,)
         )
 
+    def mark_acknowledged(self, delivery_id: int) -> Delivery:
+        """NapCat accepted request; remote persistence is not yet verified."""
+        return self._transition(
+            delivery_id,
+            state=DeliveryState.ACKNOWLEDGED,
+            allowed=(DeliveryState.UPLOADING,),
+        )
+
     def mark_verified(self, delivery_id: int, remote_reference: str) -> Delivery:
         if not remote_reference:
             raise ValueError("Remote verification reference is required")
         return self._transition(
             delivery_id,
             state=DeliveryState.VERIFIED,
-            allowed=(DeliveryState.UPLOADING, DeliveryState.UNKNOWN),
+            allowed=(DeliveryState.UPLOADING, DeliveryState.UNKNOWN, DeliveryState.ACKNOWLEDGED),
             remote_reference=remote_reference,
         )
 
