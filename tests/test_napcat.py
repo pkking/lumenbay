@@ -41,14 +41,16 @@ def test_upload_single_and_batch_use_album_actions(tmp_path: Path) -> None:
         calls.append((action, payload))
         return {"status": "ok", "retcode": 0, "data": {"provisional": True}}
 
-    client = NapCatAlbumClient(base_url="http://localhost:3000", access_token="test", transport=fake)
+    client = NapCatAlbumClient(
+        base_url="http://localhost:3000", access_token="test", transport=fake
+    )
     first = tmp_path / "1.jpg"
     second = tmp_path / "2.jpg"
     first.write_bytes(b"image1")
     second.write_bytes(b"image2")
-    assert client.upload_images(
-        group_id="g", album_id="a", album_name="Album", paths=[first]
-    ) == {"provisional": True}
+    assert client.upload_images(group_id="g", album_id="a", album_name="Album", paths=[first]) == {
+        "provisional": True
+    }
     assert calls[0][0] == "upload_image_to_qun_album"
     assert calls[0][1]["file"] == "base64://" + base64.b64encode(b"image1").decode()
     client.upload_images(group_id="g", album_id="a", album_name="Album", paths=[first, second])
@@ -75,11 +77,18 @@ def test_reject_insecure_remote_endpoint() -> None:
 
 def test_missing_or_ambiguous_album_is_error() -> None:
     def fake(action: str, payload: dict[str, object]) -> dict[str, object]:
-        return {"status": "ok", "retcode": 0, "data": {
-            "album_list": [{"album_id": "1", "album_name": "Photos"},
-                           {"album_id": "2", "album_name": "Photos"}],
-            "has_more": False, "attach_info": "",
-        }}
+        return {
+            "status": "ok",
+            "retcode": 0,
+            "data": {
+                "album_list": [
+                    {"album_id": "1", "album_name": "Photos"},
+                    {"album_id": "2", "album_name": "Photos"},
+                ],
+                "has_more": False,
+                "attach_info": "",
+            },
+        }
 
     client = NapCatAlbumClient(base_url="http://localhost:3000", access_token="", transport=fake)
     with pytest.raises(NapCatError, match="exactly one"):

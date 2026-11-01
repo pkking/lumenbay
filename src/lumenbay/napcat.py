@@ -91,9 +91,13 @@ class NapCatAlbumClient:
         cursor = ""
         visited: set[str] = set()
         while True:
-            data = self._request("get_qun_album_list", {
-                "group_id": group_id, "attach_info": cursor,
-            })
+            data = self._request(
+                "get_qun_album_list",
+                {
+                    "group_id": group_id,
+                    "attach_info": cursor,
+                },
+            )
             if not isinstance(data, dict) or not isinstance(data.get("album_list"), list):
                 raise NapCatError("Invalid QQ group album list response")
             for item in data["album_list"]:
@@ -118,8 +122,12 @@ class NapCatAlbumClient:
         return matches[0]
 
     def upload_images(
-        self, *,
-        group_id: str, album_id: str, album_name: str, paths: list[Path],
+        self,
+        *,
+        group_id: str,
+        album_id: str,
+        album_name: str,
+        paths: list[Path],
     ) -> object:
         """Upload image bytes without relying on a shared host filesystem.
 
