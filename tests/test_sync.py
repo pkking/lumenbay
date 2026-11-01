@@ -100,4 +100,23 @@ def test_missing_spool_is_not_submitted(tmp_path: Path) -> None:
     entry.path.unlink()
     stats = sync.run_once()
     assert stats.failed == 1
+    assert archive.get(1).state is DeliveryState.BLOCKED
+    assert sync.run_once().failed == 0
+    assert uploader.uploads == []
+
+
+def test_corrupt_spool_is_quarantined_without_upload(tmp_path: Path) -> None:
+    uploader = FakeUploader()
+    sync, archive = make_sync(tmp_path, uploader)
+    entry = archive.ingest(
+        source_group="Authorized group",
+        message_id="event1",
+        destination_group="qq1",
+        album_id="album1",
+        data=JPEG,
+        quality="unknown",
+    )
+    entry.path.write_bytes(b"malicious-corruption")
+    assert sync.run_once().failed == 1
+    assert archive.get(entry.id).state is DeliveryState.BLOCKED
     assert uploader.uploads == []

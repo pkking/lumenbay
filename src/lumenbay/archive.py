@@ -21,6 +21,7 @@ class DeliveryState(StrEnum):
     READY = "ready"
     UPLOADING = "uploading"
     FAILED = "failed"
+    BLOCKED = "blocked"
     UNKNOWN = "unknown"
     ACKNOWLEDGED = "acknowledged"
     VERIFIED = "verified"
@@ -49,6 +50,20 @@ def _extension(data: bytes) -> str:
     if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
         return ".webp"
     raise ValueError("Unsupported or unrecognized image format")
+
+
+def _integrity_ok(path: Path, expected: str) -> bool:
+    """Verify persisted bytes before a remote upload."""
+    if not path.is_file() or path.is_symlink():
+        return False
+    digest = hashlib.sha256()
+    try:
+        with path.open("rb") as stream:
+            for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                digest.update(chunk)
+    except OSError:
+        return False
+    return digest.hexdigest() == expected
 
 
 class Archive:
@@ -158,7 +173,7 @@ class Archive:
         extension = _extension(data)
         digest = hashlib.sha256(data).hexdigest()
         target = self.spool / f"{digest}{extension}"
-        if not target.exists():
+        if not _integrity_ok(target, digest):
             with tempfile.NamedTemporaryFile(dir=self.spool, delete=False) as tmp:
                 temp_name = Path(tmp.name)
                 try:
@@ -230,6 +245,19 @@ class Archive:
                 (destination_group, destination_group),
             ).fetchall()
         return {str(row["state"]): int(row["count"]) for row in rows}
+
+    def verify_spool(self, delivery_id: int) -> bool:
+        """Check image bytes against the stored digest without exposing media."""
+        delivery = self.get(delivery_id)
+        return _integrity_ok(delivery.path, delivery.sha256)
+
+    def mark_blocked(self, delivery_id: int) -> Delivery:
+        """Quarantine a missing or damaged spool entry; do not auto-retry."""
+        return self._transition(
+            delivery_id,
+            state=DeliveryState.BLOCKED,
+            allowed=(DeliveryState.UPLOADING,),
+        )
 
     def claim(self, delivery_id: int) -> Delivery:
         with self._connection() as conn:
