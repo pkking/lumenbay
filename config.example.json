@@ -1,0 +1,9 @@
+{
+  "wechat_group": "Authorized test group",
+  "qq_group_id": "REPLACE_WITH_TEST_GROUP_ID",
+  "qq_album_name": "Lumenbay Test",
+  "napcat_base_url": "http://127.0.0.1:3000",
+  "database": "data/archive.sqlite3",
+  "spool": "data/spool",
+  "interval_seconds": 10
+}

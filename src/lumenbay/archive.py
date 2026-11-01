@@ -213,6 +213,17 @@ class Archive:
             ).fetchall()
         return [self._delivery(row) for row in rows]
 
+    def counts(self, *, destination_group: str | None = None) -> dict[str, int]:
+        """Local delivery counts; no account or album requests."""
+        with self._connection() as conn:
+            rows = conn.execute(
+                """SELECT state, COUNT(*) AS count FROM images
+                   WHERE (? IS NULL OR destination_group = ?)
+                   GROUP BY state""",
+                (destination_group, destination_group),
+            ).fetchall()
+        return {str(row["state"]): int(row["count"]) for row in rows}
+
     def claim(self, delivery_id: int) -> Delivery:
         with self._connection() as conn:
             updated = conn.execute(
