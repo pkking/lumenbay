@@ -12,10 +12,24 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from urllib.parse import urlsplit
-from urllib.request import Request, urlopen
+from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 JsonObject = dict[str, object]
 Transport = Callable[[str, JsonObject], JsonObject]
+
+
+_MAX_RESPONSE_BYTES = 4 * 1024 * 1024
+_MAX_ALBUM_PAGES = 100
+
+
+class _NoRedirect(HTTPRedirectHandler):
+    """Never forward an authenticated request to a different host."""
+
+    def redirect_request(
+        self, req: Request, fp: object, code: int, msg: str,
+        headers: object, newurl: str,
+    ) -> None:
+        return None
 
 
 class NapCatError(RuntimeError):
@@ -63,8 +77,14 @@ class NapCatAlbumClient:
         if self._token:
             headers["Authorization"] = f"Bearer {self._token}"
         request = Request(self.base_url + "/" + action, data=body, headers=headers, method="POST")
-        with urlopen(request, timeout=self.timeout) as response:  # noqa: S310
-            parsed = json.loads(response.read().decode("utf-8"))
+        # urllib's default redirect policy can forward Authorization across origins.
+        # A redirect must fail closed rather than leak the NapCat token.
+        opener = build_opener(_NoRedirect())
+        with opener.open(request, timeout=self.timeout) as response:
+            raw = response.read(_MAX_RESPONSE_BYTES + 1)
+        if len(raw) > _MAX_RESPONSE_BYTES:
+            raise NapCatError("NapCat response exceeded size limit")
+        parsed = json.loads(raw.decode("utf-8"))
         if not isinstance(parsed, dict):
             raise NapCatError("Expected JSON object from NapCat")
         return parsed
@@ -90,7 +110,7 @@ class NapCatAlbumClient:
         albums: list[Album] = []
         cursor = ""
         visited: set[str] = set()
-        while True:
+        for _ in range(_MAX_ALBUM_PAGES):
             data = self._request(
                 "get_qun_album_list",
                 {
@@ -107,13 +127,17 @@ class NapCatAlbumClient:
                 if not isinstance(album_id, str) or not isinstance(album_name, str):
                     raise NapCatError("Album id or name is missing")
                 albums.append(Album(id=album_id, name=album_name))
-            if not data.get("has_more"):
+            has_more = data.get("has_more")
+            if not isinstance(has_more, bool):
+                raise NapCatError("Invalid QQ album pagination flag")
+            if not has_more:
                 return albums
             next_cursor = data.get("attach_info")
             if not isinstance(next_cursor, str) or not next_cursor or next_cursor in visited:
                 raise NapCatError("Invalid or repeated QQ album pagination cursor")
             visited.add(next_cursor)
             cursor = next_cursor
+        raise NapCatError("Exceeded QQ album pagination safety limit")
 
     def find_album(self, group_id: str, album_name: str) -> Album:
         matches = [album for album in self.list_albums(group_id) if album.name == album_name]

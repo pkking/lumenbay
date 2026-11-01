@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 from pathlib import Path
+from io import BytesIO
 
 import pytest
 
@@ -93,3 +94,53 @@ def test_missing_or_ambiguous_album_is_error() -> None:
     client = NapCatAlbumClient(base_url="http://localhost:3000", access_token="", transport=fake)
     with pytest.raises(NapCatError, match="exactly one"):
         client.find_album("q", "Photos")
+
+
+def test_redirect_is_never_followed() -> None:
+    from lumenbay.napcat import _NoRedirect
+    from urllib.request import Request
+
+    assert _NoRedirect().redirect_request(
+        Request("https://qq.example.test/get_qun_album_list"),
+        None, 302, "Moved", {}, "https://untrusted.test/steal",
+    ) is None
+
+
+def test_reject_oversized_response(monkeypatch: pytest.MonkeyPatch) -> None:
+    import lumenbay.napcat as napcat
+
+    class DummyOpener:
+        def open(self, request: object, timeout: float) -> BytesIO:
+            return BytesIO(b"x" * (4 * 1024 * 1024 + 1))
+
+    monkeypatch.setattr(napcat, "build_opener", lambda handler: DummyOpener())
+    client = NapCatAlbumClient(base_url="http://localhost:3000", access_token="secret")
+    with pytest.raises(NapCatError, match="size limit"):
+        client.list_albums("test")
+
+
+def test_pagination_stops_after_safety_limit() -> None:
+    def forever(action: str, payload: dict[str, object]) -> dict[str, object]:
+        return {"status": "ok", "retcode": 0, "data": {
+            "album_list": [], "has_more": True,
+            "attach_info": str(payload["attach_info"]) + "x",
+        }}
+
+    client = NapCatAlbumClient(
+        base_url="http://localhost:3000", access_token="secret", transport=forever
+    )
+    with pytest.raises(NapCatError, match="safety limit"):
+        client.list_albums("test")
+
+
+def test_invalid_has_more_flag_fails_closed() -> None:
+    def invalid(action: str, payload: dict[str, object]) -> dict[str, object]:
+        return {"status": "ok", "retcode": 0, "data": {
+            "album_list": [], "has_more": "false", "attach_info": "",
+        }}
+
+    client = NapCatAlbumClient(
+        base_url="http://localhost:3000", access_token="", transport=invalid
+    )
+    with pytest.raises(NapCatError, match="pagination flag"):
+        client.list_albums("test")
