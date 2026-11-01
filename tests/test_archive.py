@@ -115,3 +115,25 @@ def test_destination_filter_and_acknowledgement(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="not claimable"):
         store.claim(first)
     assert store.mark_verified(first, "remote-later").state is DeliveryState.VERIFIED
+
+
+def test_corrupted_spool_is_repaired_by_reingestion(tmp_path: Path) -> None:
+    store = make_archive(tmp_path)
+    delivery_id = record(store)
+    path = store.get(delivery_id).path
+    path.write_bytes(b"corrupted")
+    assert not store.verify_spool(delivery_id)
+    assert record(store, "another-message") == delivery_id
+    assert store.verify_spool(delivery_id)
+    assert path.read_bytes() == JPEG
+
+
+def test_blocked_delivery_is_excluded_from_pending_and_claim(tmp_path: Path) -> None:
+    store = make_archive(tmp_path)
+    delivery_id = record(store)
+    store.claim(delivery_id)
+    delivery = store.mark_blocked(delivery_id)
+    assert delivery.state is DeliveryState.BLOCKED
+    assert store.pending() == []
+    with pytest.raises(ValueError, match="not claimable"):
+        store.claim(delivery_id)

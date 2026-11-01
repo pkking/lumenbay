@@ -88,8 +88,8 @@ class PhotoSync:
             album_id=self.destination.album_id,
         ):
             claimed = self.archive.claim(delivery.id)
-            if not claimed.path.is_file():
-                self.archive.mark_failed(claimed.id)
+            if not self.archive.verify_spool(claimed.id):
+                self.archive.mark_blocked(claimed.id)
                 failed += 1
                 continue
             try:
