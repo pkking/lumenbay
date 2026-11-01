@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
 
 from lumenbay.archive import Archive, DeliveryState
 from lumenbay.sync import Destination, PhotoSync
