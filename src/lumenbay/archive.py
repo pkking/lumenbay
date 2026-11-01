@@ -120,8 +120,12 @@ class Archive:
         return self._delivery(row)
 
     def has_event(
-        self, *, source_group: str, message_id: str,
-        destination_group: str, album_id: str,
+        self,
+        *,
+        source_group: str,
+        message_id: str,
+        destination_group: str,
+        album_id: str,
     ) -> bool:
         """Check persisted source identity before an expensive UI download."""
         with self._connection() as conn:
@@ -198,8 +202,11 @@ class Archive:
         return self.get(result_id)
 
     def pending(
-        self, *, destination_group: str | None = None,
-        album_id: str | None = None, limit: int = 100,
+        self,
+        *,
+        destination_group: str | None = None,
+        album_id: str | None = None,
+        limit: int = 100,
     ) -> list[Delivery]:
         if limit < 1:
             raise ValueError("limit must be positive")

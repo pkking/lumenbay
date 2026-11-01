@@ -74,8 +74,12 @@ def test_only_matching_album_deliveries_are_submitted(tmp_path: Path) -> None:
     uploader = FakeUploader()
     sync, archive = make_sync(tmp_path, uploader)
     archive.ingest(
-        source_group="elsewhere", message_id="event2", destination_group="qq2",
-        album_id="album2", data=JPEG, quality="original",
+        source_group="elsewhere",
+        message_id="event2",
+        destination_group="qq2",
+        album_id="album2",
+        data=JPEG,
+        quality="original",
     )
     assert sync.run_once().accepted == 1
     assert len(archive.pending(destination_group="qq2", album_id="album2")) == 1
@@ -86,8 +90,12 @@ def test_missing_spool_is_not_submitted(tmp_path: Path) -> None:
     uploader = FakeUploader()
     sync, archive = make_sync(tmp_path, uploader)
     entry = archive.ingest(
-        source_group="Authorized group", message_id="event1", destination_group="qq1",
-        album_id="album1", data=JPEG, quality="unknown",
+        source_group="Authorized group",
+        message_id="event1",
+        destination_group="qq1",
+        album_id="album1",
+        data=JPEG,
+        quality="unknown",
     )
     entry.path.unlink()
     stats = sync.run_once()

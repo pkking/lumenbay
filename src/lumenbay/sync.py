@@ -48,7 +48,9 @@ class PhotoSync:
         uploader: AlbumUploader,
         archive: Archive,
     ) -> None:
-        if not all((source_group, destination.group_id, destination.album_id, destination.album_name)):
+        if not all(
+            (source_group, destination.group_id, destination.album_id, destination.album_name)
+        ):
             raise ValueError("Source and destination must be explicitly configured")
         self.source_group = source_group
         self.source = source
