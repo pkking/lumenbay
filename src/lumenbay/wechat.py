@@ -91,10 +91,12 @@ class WxAutoImageSource:
                 raise WeChatReadError("Image download file is missing")
             # wxauto's reported path does not prove that remote original bytes
             # were obtained; callers must verify quality separately.
-            result.append(ImageEvent(
-                source_group=self.group_name,
-                message_id=identity,
-                path=path,
-                quality="unknown",
-            ))
+            result.append(
+                ImageEvent(
+                    source_group=self.group_name,
+                    message_id=identity,
+                    path=path,
+                    quality="unknown",
+                )
+            )
         return result

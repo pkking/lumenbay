@@ -68,7 +68,8 @@ def test_wrong_chat_fails_closed(tmp_path: Path) -> None:
 
 def test_unavailable_file_fails_without_fake_success(tmp_path: Path) -> None:
     source = WxAutoImageSource(
-        FakeWeChat([FakeImage(tmp_path / "missing.jpg")]), "Authorized group",
+        FakeWeChat([FakeImage(tmp_path / "missing.jpg")]),
+        "Authorized group",
     )
     with pytest.raises(WeChatReadError, match="missing"):
         source.poll()
