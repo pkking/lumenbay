@@ -65,14 +65,16 @@ class WxAutoImageSource:
         """
         self.client.ChatWith(self.group_name)
         chat = self.client.ChatInfo()
-        if chat.get("chat_name") != self.group_name:
-            raise WeChatReadError("Active WeChat chat did not match configured group")
+        if chat.get("chat_name") != self.group_name or chat.get("chat_type") != "group":
+            raise WeChatReadError("Active WeChat chat must match configured group and type")
         result: list[ImageEvent] = []
         for msg in self.client.GetAllMessage():
             if getattr(msg, "type", None) != "image":
                 continue
             raw_id = getattr(msg, "hash", None) or getattr(msg, "id", None)
-            if raw_id is None or str(raw_id) == "":
+            if isinstance(raw_id, bool) or not isinstance(raw_id, (int, str)):
+                raise WeChatReadError("Image message has no usable identity")
+            if not str(raw_id):
                 raise WeChatReadError("Image message has no usable identity")
             identity = str(raw_id)
             if seen is not None and seen(identity):

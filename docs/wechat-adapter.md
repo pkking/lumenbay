@@ -22,12 +22,14 @@ client. Supported functions: `ChatWith`, `ChatInfo`, `GetAllMessage`, and
    with stable IDs or a controlled backlog is required for guaranteed capture.
 2. wxauto UI runtime IDs may change. An exposed `hash` is preferred; SHA256
    of downloaded bytes will be used as the final destination deduplication key.
-3. Calling `download(original=True)` does not independently prove the
+3. A matching group name is not a globally unique group identifier. Do not
+   use this adapter when multiple distinct groups share the same visible name.
+4. Calling `download(original=True)` does not independently prove the
    returned file is the original. Events are marked `quality=unknown` until
    media provenance can be established; no silent promotion to `original`.
-4. If a download fails, the adapter raises an error. It does not silently
+5. If a download fails, the adapter raises an error. It does not silently
    substitute a thumbnail or invent a file path.
-5. To avoid unnecessary repeated UI download calls, pass a `seen` predicate.
+6. To avoid unnecessary repeated UI download calls, pass a `seen` predicate.
    Durable source-event tracking will be integrated in a subsequent PR.
 
 Keep real account credentials and group photos out of repository issues,
