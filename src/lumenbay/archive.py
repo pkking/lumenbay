@@ -206,7 +206,11 @@ class Archive:
         return self.get(delivery_id)
 
     def _transition(
-        self, delivery_id: int, *, state: DeliveryState, allowed: tuple[DeliveryState, ...],
+        self,
+        delivery_id: int,
+        *,
+        state: DeliveryState,
+        allowed: tuple[DeliveryState, ...],
         remote_reference: str | None = None,
     ) -> Delivery:
         with self._connection() as conn:
@@ -222,18 +226,21 @@ class Archive:
 
     def mark_failed(self, delivery_id: int) -> Delivery:
         """Use only for definite failures known not to have committed remotely."""
-        return self._transition(delivery_id, state=DeliveryState.FAILED,
-                                allowed=(DeliveryState.UPLOADING,))
+        return self._transition(
+            delivery_id, state=DeliveryState.FAILED, allowed=(DeliveryState.UPLOADING,)
+        )
 
     def mark_unknown(self, delivery_id: int) -> Delivery:
-        return self._transition(delivery_id, state=DeliveryState.UNKNOWN,
-                                allowed=(DeliveryState.UPLOADING,))
+        return self._transition(
+            delivery_id, state=DeliveryState.UNKNOWN, allowed=(DeliveryState.UPLOADING,)
+        )
 
     def mark_verified(self, delivery_id: int, remote_reference: str) -> Delivery:
         if not remote_reference:
             raise ValueError("Remote verification reference is required")
         return self._transition(
-            delivery_id, state=DeliveryState.VERIFIED,
+            delivery_id,
+            state=DeliveryState.VERIFIED,
             allowed=(DeliveryState.UPLOADING, DeliveryState.UNKNOWN),
             remote_reference=remote_reference,
         )
@@ -241,7 +248,5 @@ class Archive:
     def quarantine_interrupted(self) -> int:
         """A restart cannot know if an in-flight upload committed remotely."""
         with self._connection() as conn:
-            updated = conn.execute(
-                "UPDATE images SET state = 'unknown' WHERE state = 'uploading'"
-            )
+            updated = conn.execute("UPDATE images SET state = 'unknown' WHERE state = 'uploading'")
             return updated.rowcount

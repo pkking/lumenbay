@@ -16,12 +16,18 @@ def make_archive(tmp_path: Path) -> Archive:
 
 
 def record(
-    store: Archive, message_id: str = "m1", destination_group: str = "qq1",
+    store: Archive,
+    message_id: str = "m1",
+    destination_group: str = "qq1",
     data: bytes = JPEG,
 ) -> int:
     return store.ingest(
-        source_group="wx1", message_id=message_id, destination_group=destination_group,
-        album_id="album", data=data, quality="original",
+        source_group="wx1",
+        message_id=message_id,
+        destination_group=destination_group,
+        album_id="album",
+        data=data,
+        quality="original",
     ).id
 
 
@@ -69,14 +75,22 @@ def test_validation_and_invalid_transition(tmp_path: Path) -> None:
     store = make_archive(tmp_path)
     with pytest.raises(ValueError, match="image"):
         store.ingest(
-            source_group="wx1", message_id="m1", destination_group="q1",
-            album_id="a1", data=b"not a picture", quality="original",
+            source_group="wx1",
+            message_id="m1",
+            destination_group="q1",
+            album_id="a1",
+            data=b"not a picture",
+            quality="original",
         )
     photo = record(store)
     with pytest.raises(ValueError, match="Invalid"):
         store.mark_verified(photo, "remote")
     with pytest.raises(ValueError, match="quality"):
         store.ingest(
-            source_group="wx1", message_id="m2", destination_group="q1",
-            album_id="a1", data=JPEG, quality="invalid",
+            source_group="wx1",
+            message_id="m2",
+            destination_group="q1",
+            album_id="a1",
+            data=JPEG,
+            quality="invalid",
         )
