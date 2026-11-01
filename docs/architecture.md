@@ -1,6 +1,6 @@
-# Architecture and delivery semantics (planned)
+# Architecture and delivery semantics
 
-**Current implementation:** only package skeleton, CLI and offline checks are implemented. The following is a design contract, not a statement of working features.
+**Current implementation:** opt-in CLI, best-effort wxauto4 polling, NapCat album API client, SQLite spool and delivery state. Real account compatibility and remote persistence verification remain untested.
 
 ## MVP boundaries
 
@@ -21,17 +21,15 @@ Track source identity (`source_group`, `message_id`) to avoid reprocessing one e
 ## Delivery state
 
 ```text
-DISCOVERED -> DOWNLOADED -> UPLOADING -> VERIFIED
-                |               |
-                v               v
-              FAILED          UNKNOWN
-                ^               |
-                |               v
-                +-- retry only after remote reconciliation
+READY -> UPLOADING -> ACKNOWLEDGED -> VERIFIED
+           |            |
+           v            v
+         FAILED        UNKNOWN
+       (safe retry)  (no automatic retry)
 ```
 
 - Write durable metadata and retain the local image **before** calling NapCat.
-- `VERIFIED` means a remote read or other reliable confirmation proved persistence, not merely that the HTTP request returned 200.
+- `ACKNOWLEDGED` means NapCat accepted the upload API request, not proof of persistence. `VERIFIED` requires a separately established remote media identity. Automatic verification is **not yet implemented**.
 - If the upload times out or the response is inconclusive, mark `UNKNOWN` and reconcile before another upload. Never blindly resend uncertain deliveries.
 - Do not call a thumbnail an original; surface the actual media quality in state.
 - Preserve unknown/failed media for human inspection until an explicit retention policy exists.
@@ -44,3 +42,11 @@ Default unit tests use fake WeChat and NapCat clients, temporary paths and an in
 ## Deployment
 
 Initial target is Windows with desktop WeChat. NapCat can run on the same host or separately. A local path on Windows is not automatically readable from a separate NapCat container; prefer controlled media transfer rather than assuming shared filesystems. No login automation or remote account setup in CI.
+
+## Current operational limitations
+
+- Source polling does not catch up historical messages after downtime.
+- Source UI message IDs may change; content hashing still prevents duplicate content per destination.
+- Uploads are submitted one at a time; successful NapCat responses may contain no media ID.
+- Both acknowledged and unknown deliveries are excluded from automatic retry until a reliable remote reconciliation protocol is implemented.
+- CLI reads local config and a token from `LUMENBAY_NAPCAT_TOKEN`. A live operation requires `--execute`.
