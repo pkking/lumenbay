@@ -11,16 +11,22 @@ from lumenbay.wechat import WeChatReadError, WxAutoImageSource
 
 
 class FakeWeChat:
-    def __init__(self, messages: list[object], chat_name: str = "Authorized group") -> None:
+    def __init__(
+        self,
+        messages: list[object],
+        chat_name: str = "Authorized group",
+        chat_type: str = "group",
+    ) -> None:
         self.messages = messages
         self.chat_name = chat_name
+        self.chat_type = chat_type
         self.opened: str | None = None
 
     def ChatWith(self, who: str) -> None:
         self.opened = who
 
     def ChatInfo(self) -> dict[str, object]:
-        return {"chat_name": self.chat_name, "chat_type": "group"}
+        return {"chat_name": self.chat_name, "chat_type": self.chat_type}
 
     def GetAllMessage(self) -> list[object]:
         return self.messages
@@ -64,6 +70,21 @@ def test_wrong_chat_fails_closed(tmp_path: Path) -> None:
     source = WxAutoImageSource(FakeWeChat([], chat_name="Different group"), "Authorized group")
     with pytest.raises(WeChatReadError, match="did not match"):
         source.poll()
+
+
+def test_same_name_friend_is_never_archived() -> None:
+    fake = FakeWeChat([], chat_type="friend")
+    with pytest.raises(WeChatReadError, match="group and type"):
+        WxAutoImageSource(fake, "Authorized group").poll()
+
+
+def test_callable_message_hash_is_rejected(tmp_path: Path) -> None:
+    file = tmp_path / "photo.jpg"
+    file.write_bytes(b"media")
+    image = FakeImage(file)
+    image.hash = lambda: "unstable"  # type: ignore[method-assign]
+    with pytest.raises(WeChatReadError, match="identity"):
+        WxAutoImageSource(FakeWeChat([image]), "Authorized group").poll()
 
 
 def test_unavailable_file_fails_without_fake_success(tmp_path: Path) -> None:
