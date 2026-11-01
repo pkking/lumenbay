@@ -68,7 +68,7 @@ def test_seen_images_are_not_downloaded(tmp_path: Path) -> None:
 
 def test_wrong_chat_fails_closed(tmp_path: Path) -> None:
     source = WxAutoImageSource(FakeWeChat([], chat_name="Different group"), "Authorized group")
-    with pytest.raises(WeChatReadError, match="did not match"):
+    with pytest.raises(WeChatReadError, match="group and type"):
         source.poll()
 
 
