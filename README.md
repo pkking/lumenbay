@@ -50,26 +50,24 @@ mise exec -- lumenbay --version
 
 The Python interpreter is selected by the committed [mise.toml](mise.toml). The virtual environment lives in the ignored `.venv/` directory. `mise install` installs the interpreter; the first `mise exec` creates and activates `.venv`. Shell activation (`mise activate`) is optional.
 
-### Authorized Windows test setup
+### Windows quick start (NapCat + OneBot HTTP Token)
 
-Install mise once (for example, `winget install jdx.mise`), then open a **new PowerShell** in the repository. Use an already signed-in compatible Windows WeChat client. The optional `wxauto4` adapter is installed separately because it requires desktop WeChat and is not used in CI.
+Full setup: **[Windows configuration and Token guide](docs/windows-quick-start.md)** (中文). It explains how to install/start NapCat, create an **HTTP server** connection, obtain its **OneBot Token** (not the WebUI password), configure the WeChat group and QQ album, and verify API access.
 
 ```powershell
 cd C:\work\lumenbay
 mise install
-mise exec -- python --version
 mise exec -- python -m pip install -e .
 mise exec -- python -m pip install wxauto4
-Copy-Item config.example.json config.json
-# Edit config.json with an authorized test group and pre-created QQ album.
-$env:LUMENBAY_NAPCAT_TOKEN = "your-local-napcat-token"
+Copy-Item config.example.json config.json  # edit the file first
+$env:LUMENBAY_NAPCAT_TOKEN = Read-Host "OneBot HTTP Token (NOT WebUI Token)"
+# Checks local SQLite state only; it does NOT contact NapCat:
 mise exec -- lumenbay status --config config.json
+# After verifying the HTTP connection and using authorized test groups:
 mise exec -- lumenbay run --config config.json --once --execute
 ```
 
-For continuous polling, run `mise exec -- lumenbay run --config config.json --execute`.
-
-Edit `config.json` with the authorized WeChat test group, QQ test group ID and **pre-created** QQ album name. The local `config.json`, credentials and spool are gitignored. For continuous best-effort polling, omit `--once`. Only `--execute` enables real access and uploads.
+For continuous best-effort polling, omit `--once`. Do not use real chat photos until the authorized test setup works.
 
 **Limitations:** free wxauto4 polls currently visible messages and may miss messages during downtime. It cannot prove the downloaded image is the original; quality is recorded as `unknown`. NapCat currently returns an acknowledgement but no confirmed remote media reference, so successful submissions remain `acknowledged` until separate verification. An inconclusive upload remains `unknown` and is not resent automatically. There is no automated reconciliation, photo deletion or historical backfill.
 
