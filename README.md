@@ -35,32 +35,39 @@ Adapters are isolated behind interfaces and tested with fakes. Ordinary CI must 
 
 ## Development
 
-Requires Python 3.11+.
+[mise](https://mise.jdx.dev/) manages **Python 3.11** and creates the local `.venv`; no `py` launcher, separate `python -m venv` step, or PowerShell activation is required.
 
 ```sh
-python -m venv .venv
-# Activate .venv, then:
-python -m pip install -e ".[dev]"
-ruff check .
-ruff format --check .
-mypy src
-pytest
-python -m build
-lumenbay --version
+mise install
+mise exec -- python -m pip install -e ".[dev]"
+mise exec -- ruff check .
+mise exec -- ruff format --check .
+mise exec -- mypy src
+mise exec -- pytest
+mise exec -- python -m build
+mise exec -- lumenbay --version
 ```
+
+The Python interpreter is selected by the committed [mise.toml](mise.toml). The virtual environment lives in the ignored `.venv/` directory. `mise install` installs the interpreter; the first `mise exec` creates and activates `.venv`. Shell activation (`mise activate`) is optional.
 
 ### Authorized Windows test setup
 
-Use a supported Windows desktop WeChat client with **Python 3.11 or 3.12** and an already logged-in account; the free `wxauto4` dependency is installed separately:
+Install mise once (for example, `winget install jdx.mise`), then open a **new PowerShell** in the repository. Use an already signed-in compatible Windows WeChat client. The optional `wxauto4` adapter is installed separately because it requires desktop WeChat and is not used in CI.
 
 ```powershell
-python -m pip install -e ".[dev]"
-python -m pip install wxauto4
+cd C:\work\lumenbay
+mise install
+mise exec -- python --version
+mise exec -- python -m pip install -e .
+mise exec -- python -m pip install wxauto4
 Copy-Item config.example.json config.json
-$env:LUMENBAY_NAPCAT_TOKEN="your-local-napcat-token"
-lumenbay status --config config.json
-lumenbay run --config config.json --once --execute
+# Edit config.json with an authorized test group and pre-created QQ album.
+$env:LUMENBAY_NAPCAT_TOKEN = "your-local-napcat-token"
+mise exec -- lumenbay status --config config.json
+mise exec -- lumenbay run --config config.json --once --execute
 ```
+
+For continuous polling, run `mise exec -- lumenbay run --config config.json --execute`.
 
 Edit `config.json` with the authorized WeChat test group, QQ test group ID and **pre-created** QQ album name. The local `config.json`, credentials and spool are gitignored. For continuous best-effort polling, omit `--once`. Only `--execute` enables real access and uploads.
 

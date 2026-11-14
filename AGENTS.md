@@ -9,7 +9,7 @@ Read this file before changing code. Lumenbay archives pictures from authorized 
 4. **No account compromise or privacy leaks:** never require real accounts or private photos in automated CI.
 
 ## Technical boundaries
-- Python 3.11+, package under `src/lumenbay/`, tests under `tests/`.
+- Use the committed `mise.toml` for local Python 3.11 and `.venv` setup (`mise install`; `mise exec -- ...`). Keep GitHub Actions' existing Python matrix unchanged. Package under `src/lumenbay/`, tests under `tests/`.
 - Keep WeChat transport, NapCat client, SQLite storage and orchestration in separate modules; do not put API calls in domain logic.
 - In tests inject fake adapters, clocks and temporary storage. No live WeChat/QQ login, network or desktop UI in default tests.
 - Keep configuration and secrets out of git. Do not log message bodies, credentials, private image content, or account cookies.

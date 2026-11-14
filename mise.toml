@@ -1,0 +1,7 @@
+# Single project-level Python runtime. Runtime packages remain in pyproject.toml.
+[tools]
+python = "3.11"
+
+# Create and activate the ignored project-local venv for mise exec / mise activate.
+[env]
+_.python.venv = { path = ".venv", create = true }

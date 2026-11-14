@@ -4,20 +4,19 @@ Lumenbay is being built incrementally. Read [AGENTS.md](AGENTS.md) before openin
 
 ## Local development
 
-Use Python 3.11 or newer (Windows and Linux are covered by CI).
+Use [mise](https://mise.jdx.dev/) on Windows or Linux. The repository's `mise.toml` selects Python 3.11 and creates the ignored `.venv` automatically.
 
 ```sh
-python -m venv .venv
-# Activate your environment.
-python -m pip install -e ".[dev]"
-ruff check .
-ruff format --check .
-mypy src
-pytest
-python -m build
+mise install
+mise exec -- python -m pip install -e ".[dev]"
+mise exec -- ruff check .
+mise exec -- ruff format --check .
+mise exec -- mypy src
+mise exec -- pytest
+mise exec -- python -m build
 ```
 
-To fix formatting locally, run `ruff format .`; to fix lint issues, run `ruff check --fix .`. Do not silently change behavior to satisfy automated checks.
+No `py` launcher or manual virtualenv activation is required. To fix formatting, run `mise exec -- ruff format .`; for lint fixes, `mise exec -- ruff check --fix .`. Do not silently change behavior to satisfy automated checks.
 
 ## Pull requests
 
